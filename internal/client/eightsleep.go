@@ -138,6 +138,8 @@ func (c *Client) authTokenEndpoint(ctx context.Context) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(resp.Body)
+		log.Debug("token auth failed", "status", resp.Status, "headers", resp.Header, "body", string(b))
 		return fmt.Errorf("token auth failed: %s", resp.Status)
 	}
 
@@ -190,6 +192,7 @@ func (c *Client) authLegacyLogin(ctx context.Context) error {
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(resp.Body)
+		log.Debug("legacy login failed", "status", resp.Status, "headers", resp.Header, "body", string(b))
 		return fmt.Errorf("login failed: %s", string(b))
 	}
 	var res struct {
