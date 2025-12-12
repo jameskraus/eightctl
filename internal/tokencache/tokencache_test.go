@@ -158,6 +158,38 @@ func TestCacheKeyHandlesEmptyEmail(t *testing.T) {
 	}
 }
 
+func TestLoadWithoutEmailFindsSingleMatch(t *testing.T) {
+	withTestKeyring(t)
+	id := Identity{BaseURL: "https://api.example.com", ClientID: "client-1", Email: "user@example.com"}
+	if err := Save(id, "tok", time.Now().Add(time.Hour), "user-1"); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	// email omitted -> should still find the single token
+	idNoEmail := Identity{BaseURL: id.BaseURL, ClientID: id.ClientID}
+	cached, err := Load(idNoEmail, "user-1")
+	if err != nil {
+		t.Fatalf("Load without email: %v", err)
+	}
+	if cached.Token != "tok" {
+		t.Fatalf("token mismatch: %q", cached.Token)
+	}
+}
+
+func TestLoadWithoutEmailMultipleMatchesFails(t *testing.T) {
+	withTestKeyring(t)
+	common := Identity{BaseURL: "https://api.example.com", ClientID: "client-1"}
+	if err := Save(Identity{BaseURL: common.BaseURL, ClientID: common.ClientID, Email: "a@example.com"}, "ta", time.Now().Add(time.Hour), "ua"); err != nil {
+		t.Fatalf("save a: %v", err)
+	}
+	if err := Save(Identity{BaseURL: common.BaseURL, ClientID: common.ClientID, Email: "b@example.com"}, "tb", time.Now().Add(time.Hour), "ub"); err != nil {
+		t.Fatalf("save b: %v", err)
+	}
+	if _, err := Load(common, ""); err != keyring.ErrKeyNotFound {
+		t.Fatalf("expected not found when multiple matches, got %v", err)
+	}
+}
+
 func TestFilePasswordFunc(t *testing.T) {
 	pw, err := filePassword("ignored")
 	if err != nil {
