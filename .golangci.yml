@@ -1,11 +1,15 @@
+version: 2
+
 run:
   timeout: 3m
   tests: true
 linters:
   disable-all: true
+  disable:
+    - errcheck
+    - unused
   enable:
-    - gofmt
-    - gofumpt
+    - govet
     # revive and errcheck disabled to keep CLI glue concise
     # - revive
     # - errcheck
